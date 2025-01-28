@@ -1,0 +1,48 @@
+{
+    "info": {
+        "name": "IELTS AI Service",
+        "description": "Collection for IELTS Essay Checking Service",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Check OpenAI Connection",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "http://localhost:3000/api/essay/health",
+                    "protocol": "http",
+                    "host": ["localhost"],
+                    "port": "3000",
+                    "path": ["api", "essay", "health"]
+                },
+                "description": "Check if OpenAI connection is working"
+            }
+        },
+        {
+            "name": "Check IELTS Essay",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"essay\": \"Write your essay text here. For example: In recent years, the rise of remote work has transformed the way people approach their careers. Some argue that this shift has improved work-life balance, while others contend it has blurred the boundaries between professional and personal life. Discuss both views and give your opinion.\"\n}"
+                },
+                "url": {
+                    "raw": "http://localhost:3000/api/essay/check",
+                    "protocol": "http",
+                    "host": ["localhost"],
+                    "port": "3000",
+                    "path": ["api", "essay", "check"]
+                },
+                "description": "Submit an essay for IELTS evaluation"
+            }
+        }
+    ]
+}
