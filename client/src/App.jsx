@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Container, Typography, Box, Button, Paper, CircularProgress, ThemeProvider, createTheme } from '@mui/material'
+import { Container, Typography, Box, Button, Paper, CircularProgress, ThemeProvider, createTheme, Divider, Grid, List, ListItem, ListItemText } from '@mui/material'
 import ReactQuill from 'react-quill'
 import ReactMarkdown from 'react-markdown'
 import axios from 'axios'
@@ -52,6 +52,7 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
+  const [usage, setUsage] = useState(null)
 
   const handleSubmit = async () => {
     setLoading(true)
@@ -59,6 +60,7 @@ function App() {
     try {
       const response = await axios.post('http://localhost:3000/api/essay/check', { essay })
       setResult(response.data.evaluation)
+      setUsage(response.data.usage)
     } catch (err) {
       console.error('Error details:', err);
       setError(err.response?.data?.error || err.message || 'An error occurred while checking your essay');
@@ -117,9 +119,53 @@ function App() {
           <Typography variant="h6" gutterBottom>
             Evaluation Result
           </Typography>
-          <Box className="evaluation-content">
+          <Box className="evaluation-content" sx={{ mb: 3 }}>
             <ReactMarkdown>{result}</ReactMarkdown>
           </Box>
+          
+          {/* API Usage Statistics */}
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="h6" gutterBottom>
+            API Usage Statistics
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <Paper variant="outlined" sx={{ p: 2 }}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Token Usage
+                </Typography>
+                <List dense>
+                  <ListItem>
+                    <ListItemText primary="Input Tokens" secondary={usage.promptTokens} />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText primary="Output Tokens" secondary={usage.completionTokens} />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText primary="Total Tokens" secondary={usage.totalTokens} />
+                  </ListItem>
+                </List>
+              </Paper>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Paper variant="outlined" sx={{ p: 2 }}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Cost Breakdown (USD)
+                </Typography>
+                <List dense>
+                  <ListItem>
+                    <ListItemText primary="Input Cost" secondary={`$${usage.costs.promptCost}`} />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText primary="Output Cost" secondary={`$${usage.costs.completionCost}`} />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText primary="Total Cost" secondary={`$${usage.costs.totalCost}`} />
+                  </ListItem>
+                </List>
+              </Paper>
+            </Grid>
+          </Grid>
         </Paper>
       )}
     </Container>
