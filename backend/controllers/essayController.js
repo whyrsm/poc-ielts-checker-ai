@@ -4,20 +4,45 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
 });
 
+// Constants for evaluation criteria
+const EVALUATION_CRITERIA = {
+    task1: `
+- Accurate data selection and comparison
+- Clear overview of main trends
+- Data presentation and progression
+- Appropriate use of language for data description`,
+    task2: `
+- Clear position throughout
+- Main ideas fully developed
+- Relevant examples and evidence
+- Logical argument progression`
+};
+
+// Constants for OpenAI API costs
+const COST_PER_1K_TOKENS = {
+    prompt: 0.03,
+    completion: 0.06
+};
+
+/**
+ * Checks the connection to OpenAI API
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 const checkOpenAIConnection = async (req, res) => {
     try {
         const completion = await openai.chat.completions.create({
-            model: "gpt-4o",
+            model: "gpt-4",
             messages: [{ role: "user", content: "Hello" }],
             max_tokens: 5
         });
 
         if (completion.choices[0].message) {
-            res.json({ status: 'success', message: 'OpenAI connection is working' });
+            return res.json({ status: 'success', message: 'OpenAI connection is working' });
         }
     } catch (error) {
         console.error('OpenAI connection error:', error);
-        res.status(500).json({ 
+        return res.status(500).json({ 
             status: 'error', 
             message: 'Failed to connect to OpenAI',
             error: error.message 
@@ -25,43 +50,41 @@ const checkOpenAIConnection = async (req, res) => {
     }
 };
 
-const checkEssay = async (req, res) => {
-    try {
-        const { essay } = req.body;
+/**
+ * Validates the essay submission request
+ * @param {Object} req - Express request object
+ * @returns {Object|null} - Returns error object if validation fails, null if passes
+ */
+const validateEssayRequest = (req) => {
+    const { essay, taskType } = req.body;
 
-        if (!essay) {
-            return res.status(400).json({ error: 'Essay text is required' });
-        }
+    if (!essay) {
+        return { status: 400, message: 'Essay text is required' };
+    }
 
-        if (!process.env.OPENAI_API_KEY) {
-            console.error('OpenAI API key is not configured');
-            return res.status(500).json({ error: 'OpenAI API key is not configured' });
-        }
+    if (!process.env.OPENAI_API_KEY) {
+        console.error('OpenAI API key is not configured');
+        return { status: 500, message: 'OpenAI API key is not configured' };
+    }
 
-        const { essay, taskType } = req.body;
+    if (!['task1', 'task2'].includes(taskType)) {
+        return { status: 400, message: 'Invalid task type. Must be either "task1" or "task2"' };
+    }
 
-        if (!essay) {
-            return res.status(400).json({ error: 'Essay text is required' });
-        }
+    return null;
+};
 
-        if (!process.env.OPENAI_API_KEY) {
-            console.error('OpenAI API key is not configured');
-            return res.status(500).json({ error: 'OpenAI API key is not configured' });
-        }
+/**
+ * Generates the evaluation prompt based on task type
+ * @param {string} taskType - Type of the task (task1 or task2)
+ * @param {string} essay - The essay text to evaluate
+ * @returns {string} - The formatted prompt for OpenAI
+ */
+const generateEvaluationPrompt = (taskType, essay) => {
+    const criteria = EVALUATION_CRITERIA[taskType];
+    const taskNumber = taskType === 'task1' ? '1' : '2';
 
-        const task1Criteria = `
-- Accurate data selection and comparison
-- Clear overview of main trends
-- Data presentation and progression
-- Appropriate use of language for data description`;
-
-        const task2Criteria = `
-- Clear position throughout
-- Main ideas fully developed
-- Relevant examples and evidence
-- Logical argument progression`;
-
-        const prompt = `As an experienced IELTS examiner, evaluate the following ${taskType === 'task1' ? 'Task 1' : 'Task 2'} essay according to the official IELTS Writing band descriptors. Consider these specific criteria for ${taskType === 'task1' ? 'Task 1' : 'Task 2'}:${taskType === 'task1' ? task1Criteria : task2Criteria}
+    return `As an experienced IELTS examiner, evaluate the following Task ${taskNumber} essay according to the official IELTS Writing band descriptors. Consider these specific criteria for Task ${taskNumber}:${criteria}
 
 Provide a detailed evaluation in Markdown format using this structure:
 
@@ -118,38 +141,57 @@ Provide a detailed evaluation in Markdown format using this structure:
 3. [actionable improvement step 3]
 
 Essay to evaluate: ${essay}`;
+};
+
+/**
+ * Calculates token usage and costs
+ * @param {Object} usage - Token usage data from OpenAI
+ * @returns {Object} - Formatted usage and cost data
+ */
+const calculateUsageAndCosts = (usage) => {
+    const { prompt_tokens, completion_tokens, total_tokens } = usage;
+    
+    const promptCost = (prompt_tokens / 1000) * COST_PER_1K_TOKENS.prompt;
+    const completionCost = (completion_tokens / 1000) * COST_PER_1K_TOKENS.completion;
+    
+    return {
+        promptTokens: prompt_tokens,
+        completionTokens: completion_tokens,
+        totalTokens: total_tokens,
+        costs: {
+            promptCost: promptCost.toFixed(4),
+            completionCost: completionCost.toFixed(4),
+            totalCost: (promptCost + completionCost).toFixed(4)
+        }
+    };
+};
+
+/**
+ * Handles essay evaluation request
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const checkEssay = async (req, res) => {
+    try {
+        const validationError = validateEssayRequest(req);
+        if (validationError) {
+            return res.status(validationError.status).json({ error: validationError.message });
+        }
+
+        const { essay, taskType } = req.body;
+        const prompt = generateEvaluationPrompt(taskType, essay);
 
         const completion = await openai.chat.completions.create({
-            model: "gpt-4o",
+            model: "gpt-4",
             messages: [{ role: "user", content: prompt }],
             temperature: 0.7,
             max_tokens: 1000
         });
 
         const evaluation = completion.choices[0].message.content;
-        
-        // Calculate token usage and costs
-        const promptTokens = completion.usage.prompt_tokens;
-        const completionTokens = completion.usage.completion_tokens;
-        const totalTokens = completion.usage.total_tokens;
-        
-        const promptCost = (promptTokens / 1000) * 0.03;
-        const completionCost = (completionTokens / 1000) * 0.06;
-        const totalCost = promptCost + completionCost;
+        const usage = calculateUsageAndCosts(completion.usage);
 
-        res.json({ 
-            evaluation,
-            usage: {
-                promptTokens,
-                completionTokens,
-                totalTokens,
-                costs: {
-                    promptCost: promptCost.toFixed(4),
-                    completionCost: completionCost.toFixed(4),
-                    totalCost: totalCost.toFixed(4)
-                }
-            }
-        });
+        res.json({ evaluation, usage });
     } catch (error) {
         console.error('Error checking essay:', error);
         const errorMessage = error.response?.data?.error?.message || error.message || 'Error evaluating essay';
