@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown'
 import axios from 'axios'
 import 'react-quill/dist/quill.snow.css'
 import './App.css'
+import SpeakingTest from './components/SpeakingTest'
 
 const theme = createTheme({
   palette: {
@@ -48,12 +49,22 @@ const theme = createTheme({
 })
 
 function App() {
+  const [testType, setTestType] = useState('writing')
   const [taskType, setTaskType] = useState('task2')
   const [essay, setEssay] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [usage, setUsage] = useState(null)
+
+  const handleTestTypeChange = (event, newTestType) => {
+    if (newTestType !== null) {
+      setTestType(newTestType)
+      setResult(null)
+      setError(null)
+      setUsage(null)
+    }
+  }
 
   const handleTaskTypeChange = (event, newTaskType) => {
     if (newTaskType !== null) {
@@ -83,130 +94,120 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
     <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', py: 6 }}>
-    <Container maxWidth="lg">
+    <Container maxWidth="xl">
       <Typography variant="h4" component="h1" gutterBottom align="center">
-        IELTS Writing Checker
+        IELTS AI Assistant
       </Typography>
 
       <Box sx={{ mb: 6 }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
           <Typography variant="h6" gutterBottom>
-            Select Task Type
+            Select Test Type
           </Typography>
           <ToggleButtonGroup
-            value={taskType}
+            value={testType}
             exclusive
-            onChange={handleTaskTypeChange}
-            aria-label="IELTS writing task type"
-            sx={{ mb: 2 }}
+            onChange={handleTestTypeChange}
+            aria-label="IELTS test type"
           >
-            <ToggleButton value="task1" aria-label="Task 1">
-              Writing Task 1
+            <ToggleButton value="writing" aria-label="writing test">
+              Writing
             </ToggleButton>
-            <ToggleButton value="task2" aria-label="Task 2">
-              Writing Task 2
+            <ToggleButton value="speaking" aria-label="speaking test">
+              Speaking
             </ToggleButton>
           </ToggleButtonGroup>
-          <Typography variant="body2" color="text.secondary" align="center">
-            {taskType === 'task1' ? 
-              'Describe, summarize or explain the information provided in graphs, tables, charts, or diagrams.' :
-              'Write an essay in response to a point of view, argument, or problem.'
-            }
-          </Typography>
         </Box>
-        <Typography variant="h6" gutterBottom>
-          Write Your IELTS Essay
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Type or paste your essay here. Use the formatting tools above to structure your text. Click 'Check' when you're ready for evaluation.
-        </Typography>
-        <Paper elevation={3} sx={{ p: 4 }}>
-          <ReactQuill
-            theme="snow"
-            value={essay}
-            onChange={setEssay}
-            style={{ height: '300px', marginBottom: '50px' }}
-            modules={{
-              toolbar: [
-                [{ 'header': [1, 2, false] }],
-                ['bold', 'italic', 'underline'],
-                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                ['clean']
-              ]
-            }}
-          />
-          <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end' }}>
-            <Button
-              variant="contained"
-              onClick={handleSubmit}
-              disabled={loading || !essay.trim()}
-            >
-              {loading ? <CircularProgress size={24} /> : 'Check'}
-            </Button>
-          </Box>
-        </Paper>
+
+        {testType === 'writing' ? (
+          <>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
+              <Typography variant="h6" gutterBottom>
+                Select Task Type
+              </Typography>
+              <ToggleButtonGroup
+                value={taskType}
+                exclusive
+                onChange={handleTaskTypeChange}
+                aria-label="IELTS writing task type"
+              >
+                <ToggleButton value="task1" aria-label="task 1">
+                  Task 1
+                </ToggleButton>
+                <ToggleButton value="task2" aria-label="task 2">
+                  Task 2
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
+
+            <Paper sx={{ p: 4, mb: 4 }}>
+              <Typography variant="h6" gutterBottom>
+                {taskType === 'task1' ? 'Academic Task 1' : 'Academic Task 2'}
+              </Typography>
+              <ReactQuill
+                value={essay}
+                onChange={setEssay}
+                style={{ height: '200px', marginBottom: '50px' }}
+              />
+              <Box sx={{ mt: 8, display: 'flex', justifyContent: 'center' }}>
+                <Button
+                  variant="contained"
+                  onClick={handleSubmit}
+                  disabled={!essay.trim() || loading}
+                >
+                  {loading ? <CircularProgress size={24} /> : 'Check Essay'}
+                </Button>
+              </Box>
+            </Paper>
+
+            {error && (
+              <Typography color="error" sx={{ mb: 2 }}>
+                {error}
+              </Typography>
+            )}
+
+            {result && (
+              <Paper sx={{ p: 4 }}>
+                <Typography variant="h6" gutterBottom>
+                  Evaluation Results
+                </Typography>
+                <ReactMarkdown>{result}</ReactMarkdown>
+
+                {usage && (
+                  <Box sx={{ mt: 4 }}>
+                    <Divider sx={{ mb: 2 }} />
+                    <Typography variant="h6" gutterBottom>
+                      Token Usage
+                    </Typography>
+                    <List dense>
+                      <ListItem>
+                        <ListItemText
+                          primary={`Prompt Tokens: ${usage.promptTokens}`}
+                          secondary={`Cost: $${usage.costs.promptCost}`}
+                        />
+                      </ListItem>
+                      <ListItem>
+                        <ListItemText
+                          primary={`Completion Tokens: ${usage.completionTokens}`}
+                          secondary={`Cost: $${usage.costs.completionCost}`}
+                        />
+                      </ListItem>
+                      <ListItem>
+                        <ListItemText
+                          primary={`Total Tokens: ${usage.totalTokens}`}
+                          secondary={`Total Cost: $${usage.costs.totalCost}`}
+                        />
+                      </ListItem>
+                    </List>
+                  </Box>
+                )}
+              </Paper>
+            )}
+          </>
+        ) : (
+          <SpeakingTest />
+        )}
       </Box>
-
-      {error && (
-        <Paper elevation={3} sx={{ p: 3, mb: 4, bgcolor: '#ffebee', borderLeft: '4px solid #ef5350' }}>
-          <Typography color="error">{error}</Typography>
-        </Paper>
-      )}
-
-      {result && (
-        <Paper elevation={3} sx={{ p: 4 }}>
-          <Typography variant="h6" gutterBottom>
-            Evaluation Result
-          </Typography>
-          <Box className="evaluation-content" sx={{ mb: 3 }}>
-            <ReactMarkdown>{result}</ReactMarkdown>
-          </Box>
-          
-          {/* API Usage Statistics */}
-          <Divider sx={{ my: 2 }} />
-          <Typography variant="h6" gutterBottom>
-            API Usage Statistics
-          </Typography>
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
-              <Paper variant="outlined" sx={{ p: 2 }}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Token Usage
-                </Typography>
-                <List dense>
-                  <ListItem>
-                    <ListItemText primary="Input Tokens" secondary={usage.promptTokens} />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText primary="Output Tokens" secondary={usage.completionTokens} />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText primary="Total Tokens" secondary={usage.totalTokens} />
-                  </ListItem>
-                </List>
-              </Paper>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Paper variant="outlined" sx={{ p: 2 }}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Cost Breakdown (USD)
-                </Typography>
-                <List dense>
-                  <ListItem>
-                    <ListItemText primary="Input Cost" secondary={`$${usage.costs.promptCost}`} />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText primary="Output Cost" secondary={`$${usage.costs.completionCost}`} />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText primary="Total Cost" secondary={`$${usage.costs.totalCost}`} />
-                  </ListItem>
-                </List>
-              </Paper>
-            </Grid>
-          </Grid>
-        </Paper>
-      )}
     </Container>
     </Box>
     </ThemeProvider>

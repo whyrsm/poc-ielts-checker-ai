@@ -1,0 +1,162 @@
+{
+  "info": {
+    "_postman_id": "e5f23d1c-8b4e-4d5a-9f8e-123456789abc",
+    "name": "IELTS Speaking Review API",
+    "description": "Collection for testing IELTS Speaking Review API endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Speaking Evaluation",
+      "item": [
+        {
+          "name": "Evaluate Speaking Part 1",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "multipart/form-data"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "audio",
+                  "type": "file",
+                  "src": "",
+                  "description": "Audio file for evaluation"
+                },
+                {
+                  "key": "part",
+                  "value": "part1",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/speaking/evaluate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "speaking", "evaluate"]
+            },
+            "description": "Evaluate speaking for Part 1 (Introduction and Interview)"
+          },
+          "response": []
+        },
+        {
+          "name": "Evaluate Speaking Part 2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "multipart/form-data"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "audio",
+                  "type": "file",
+                  "src": "",
+                  "description": "Audio file for evaluation"
+                },
+                {
+                  "key": "part",
+                  "value": "part2",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/speaking/evaluate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "speaking", "evaluate"]
+            },
+            "description": "Evaluate speaking for Part 2 (Individual Long Turn)"
+          },
+          "response": []
+        },
+        {
+          "name": "Evaluate Speaking Part 3",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "multipart/form-data"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "audio",
+                  "type": "file",
+                  "src": "",
+                  "description": "Audio file for evaluation"
+                },
+                {
+                  "key": "part",
+                  "value": "part3",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/speaking/evaluate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "speaking", "evaluate"]
+            },
+            "description": "Evaluate speaking for Part 3 (Two-Way Discussion)"
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid Audio Format",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "multipart/form-data"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "audio",
+                  "type": "file",
+                  "src": "",
+                  "description": "Invalid file format (e.g., .txt)"
+                },
+                {
+                  "key": "part",
+                  "value": "part1",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/speaking/evaluate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "speaking", "evaluate"]
+            },
+            "description": "Test error handling for invalid audio format"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}
