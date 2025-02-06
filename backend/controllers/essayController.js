@@ -38,36 +38,84 @@ const checkEssay = async (req, res) => {
             return res.status(500).json({ error: 'OpenAI API key is not configured' });
         }
 
-        const prompt = `As an IELTS examiner, evaluate the following essay according to the IELTS Writing band descriptors and provide the response in Markdown format using the following structure:
+        const { essay, taskType } = req.body;
+
+        if (!essay) {
+            return res.status(400).json({ error: 'Essay text is required' });
+        }
+
+        if (!process.env.OPENAI_API_KEY) {
+            console.error('OpenAI API key is not configured');
+            return res.status(500).json({ error: 'OpenAI API key is not configured' });
+        }
+
+        const task1Criteria = `
+- Accurate data selection and comparison
+- Clear overview of main trends
+- Data presentation and progression
+- Appropriate use of language for data description`;
+
+        const task2Criteria = `
+- Clear position throughout
+- Main ideas fully developed
+- Relevant examples and evidence
+- Logical argument progression`;
+
+        const prompt = `As an experienced IELTS examiner, evaluate the following ${taskType === 'task1' ? 'Task 1' : 'Task 2'} essay according to the official IELTS Writing band descriptors. Consider these specific criteria for ${taskType === 'task1' ? 'Task 1' : 'Task 2'}:${taskType === 'task1' ? task1Criteria : task2Criteria}
+
+Provide a detailed evaluation in Markdown format using this structure:
 
 # Band Scores
 
-- Task Response: [score] - [brief comment]
-- Coherence and Cohesion: [score] - [brief comment]
-- Lexical Resource: [score] - [brief comment]
-- Grammatical Range and Accuracy: [score] - [brief comment]
+- Task Response: [score /9.0] - [brief comment]
+- Coherence and Cohesion: [score /9.0] - [brief comment]
+- Lexical Resource: [score /9.0] - [brief comment]
+- Grammatical Range and Accuracy: [score /9.0] - [brief comment]
 
-**Overall Band Score:** [score]
+**Overall Band Score:** [score /9.0]
 
 # Detailed Feedback
 
 ## Task Response
-[detailed feedback for task response]
+[Provide specific feedback on how well the essay addresses the task requirements, including:
+- For Task 1: data coverage, key features, trends, comparisons
+- For Task 2: position, main ideas, supporting evidence, conclusions]
 
 ## Coherence and Cohesion
-[detailed feedback for coherence and cohesion]
+[Evaluate:
+- Paragraph organization
+- Logical progression
+- Use of cohesive devices
+- Referencing]
 
 ## Lexical Resource
-[detailed feedback for lexical resource]
+[Analyze:
+- Vocabulary range and accuracy
+- Word choice and formation
+- Collocations and idiomatic expressions
+- Topic-specific terminology]
 
 ## Grammatical Range and Accuracy
-[detailed feedback for grammatical range and accuracy]
+[Assess:
+- Sentence structures
+- Grammar accuracy
+- Punctuation
+- Complex structures usage]
 
-# Recommendations for Improvement
+# Strengths
+- [key strength 1]
+- [key strength 2]
+- [key strength 3]
 
-- [recommendation 1]
-- [recommendation 2]
-- [recommendation 3]
+# Areas for Improvement
+- [specific area 1 with example and suggestion]
+- [specific area 2 with example and suggestion]
+- [specific area 3 with example and suggestion]
+
+# Next Steps
+1. [actionable improvement step 1]
+2. [actionable improvement step 2]
+3. [actionable improvement step 3]
 
 Essay to evaluate: ${essay}`;
 

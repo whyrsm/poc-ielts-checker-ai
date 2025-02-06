@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Container, Typography, Box, Button, Paper, CircularProgress, ThemeProvider, createTheme, Divider, Grid, List, ListItem, ListItemText } from '@mui/material'
+import { Container, Typography, Box, Button, Paper, CircularProgress, ThemeProvider, createTheme, Divider, Grid, List, ListItem, ListItemText, ToggleButtonGroup, ToggleButton } from '@mui/material'
 import ReactQuill from 'react-quill'
 import ReactMarkdown from 'react-markdown'
 import axios from 'axios'
@@ -48,17 +48,28 @@ const theme = createTheme({
 })
 
 function App() {
+  const [taskType, setTaskType] = useState('task2')
   const [essay, setEssay] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [usage, setUsage] = useState(null)
 
+  const handleTaskTypeChange = (event, newTaskType) => {
+    if (newTaskType !== null) {
+      setTaskType(newTaskType)
+      setEssay('')
+      setResult(null)
+      setError(null)
+      setUsage(null)
+    }
+  }
+
   const handleSubmit = async () => {
     setLoading(true)
     setError(null)
     try {
-      const response = await axios.post('http://localhost:3000/api/essay/check', { essay })
+      const response = await axios.post('http://localhost:3000/api/essay/check', { essay, taskType })
       setResult(response.data.evaluation)
       setUsage(response.data.usage)
     } catch (err) {
@@ -78,8 +89,36 @@ function App() {
       </Typography>
 
       <Box sx={{ mb: 6 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
+          <Typography variant="h6" gutterBottom>
+            Select Task Type
+          </Typography>
+          <ToggleButtonGroup
+            value={taskType}
+            exclusive
+            onChange={handleTaskTypeChange}
+            aria-label="IELTS writing task type"
+            sx={{ mb: 2 }}
+          >
+            <ToggleButton value="task1" aria-label="Task 1">
+              Writing Task 1
+            </ToggleButton>
+            <ToggleButton value="task2" aria-label="Task 2">
+              Writing Task 2
+            </ToggleButton>
+          </ToggleButtonGroup>
+          <Typography variant="body2" color="text.secondary" align="center">
+            {taskType === 'task1' ? 
+              'Describe, summarize or explain the information provided in graphs, tables, charts, or diagrams.' :
+              'Write an essay in response to a point of view, argument, or problem.'
+            }
+          </Typography>
+        </Box>
         <Typography variant="h6" gutterBottom>
-          Your Essay Writing
+          Write Your IELTS Essay
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Type or paste your essay here. Use the formatting tools above to structure your text. Click 'Check' when you're ready for evaluation.
         </Typography>
         <Paper elevation={3} sx={{ p: 4 }}>
           <ReactQuill
