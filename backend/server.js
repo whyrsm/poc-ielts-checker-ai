@@ -18,9 +18,13 @@ app.use(express.static(path.join(__dirname, '../client/dist')));
 app.use('/api/essay', require('./routes/essayRoutes'));
 app.use('/api/speaking', require('./routes/speakingRoutes'));
 
-// Handle React routing
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/dist', 'index.html'));
+// Basic API health check
+router.get('/ping', (req, res) => {
+    res.json({ 
+        status: 'success',
+        message: 'API is running',
+        timestamp: new Date().toISOString()
+    });
 });
 
 const PORT = process.env.PORT || 3000;
