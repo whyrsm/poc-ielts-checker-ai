@@ -19,7 +19,7 @@ app.use('/api/essay', require('./routes/essayRoutes'));
 app.use('/api/speaking', require('./routes/speakingRoutes'));
 
 // Basic API health check
-app.get('/ping', (req, res) => {
+app.get('/api/ping', (req, res) => {
     res.json({ 
         status: 'success',
         message: 'API is running',
